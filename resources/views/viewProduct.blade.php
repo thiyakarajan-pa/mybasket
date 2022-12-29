@@ -24,7 +24,24 @@
             }
             .header { min-height:100px; height:100px; background:#695aa6; }
 
-            input {border:1px solid #000;}
+            .StripeElement {
+                background-color: white;
+                padding: 8px 12px;
+                border-radius: 4px;
+                border: 1px solid transparent;
+                box-shadow: 0 1px 3px 0 #e6ebf1;
+                -webkit-transition: box-shadow 150ms ease;
+                transition: box-shadow 150ms ease;
+            }
+            .StripeElement--focus {
+                box-shadow: 0 1px 3px 0 #cfd7df;
+            }
+            .StripeElement--invalid {
+                border-color: #fa755a;
+            }
+            .StripeElement--webkit-autofill {
+                background-color: #fefde5 !important;
+            }
         </style>
     </head>
     <body data-spy="scroll" data-target=".navbar" data-offset="40" id="home">
@@ -61,21 +78,37 @@
                     <div class="col-md-6 text-left">
                         <h4>Price : {{ $item->unitPrice }}</h4>
                         <p>{{ $item->description }}</p>
-                        
                         <div class="panel panel-info">
                             <div class="panel-heading">Buy Now</div>
                             <div class="panel-body">
-                                <div class="form-group">
-                                    <input id="card-holder-name" type="text" class="form-control" placeholder="Enter Card Holder Name" />
-                                </div>
-                                <div class="form-group">
-                                    <div id="card-element"></div>
-                                </div>
-                                <!-- Stripe Elements Placeholder -->
-                                
-                                <button id="card-button" class="btn btn-lg my-font btn-light rounded">
-                                    Process Payment
-                                </button>
+                                <form action="{{ route('checkout') }}" method="POST" id="subscribe-form">
+                                    <div class="form-group">
+                                        <input id="amount" type="number" value="{{ $item->unitPrice }}" class="form-control" placeholder="Enter the Price" readonly />
+                                    </div>
+                                    <div class="form-group">
+                                        <input id="card-holder-name" type="text" class="form-control" placeholder="Enter Card Holder Name" />
+                                    </div>
+                                    @csrf
+                                    <div class="form-group">
+                                        <label for="card-element">Card Details</label>
+                                        <div id="card-element" class="form-control">
+                                        </div>
+                                        <!-- Used to display form errors. -->
+                                        <div id="card-errors" role="alert"></div>
+                                    </div>
+                                    <div class="stripe-errors"></div>
+                                    @if (count($errors) > 0)
+                                    <div class="alert alert-danger">
+                                        @foreach ($errors->all() as $error)
+                                        {{ $error }}<br>
+                                        @endforeach
+                                    </div>
+                                    @endif
+                                    
+                                    <div class="form-group text-center">
+                                        <button id="card-button" data-secret="{{ config('services.stripe.secret') }}" class="btn btn-lg my-font btn-light rounded">Proceed Payment</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -110,30 +143,69 @@
         <script src="https://js.stripe.com/v3/"></script>
  
         <script>
-            const stripe = Stripe('pk_test_fRhMNhovq7Rf48uP0DPq4LK7');
-            const elements = stripe.elements();
-            const cardElement = elements.create('card');
+            var stripe = Stripe('pk_test_fRhMNhovq7Rf48uP0DPq4LK7');
+            var elements = stripe.elements();
+            var style = {
+                base: {
+                    color: '#32325d',
+                    fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                    fontSmoothing: 'antialiased',
+                    fontSize: '16px',
+                    '::placeholder': {
+                        color: '#aab7c4'
+                    }
+                },
+                invalid: {
+                    color: '#fa755a',
+                    iconColor: '#fa755a'
+                }
+            };
+            var card = elements.create('card', {hidePostalCode: true,
+                style: style});
+            card.mount('#card-element');
+            card.addEventListener('change', function(event) {
+                var displayError = document.getElementById('card-errors');
+                if (event.error) {
+                    displayError.textContent = event.error.message;
+                } else {
+                    displayError.textContent = '';
+                }
+            });
         
             cardElement.mount('#card-element');
 
             const cardHolderName = document.getElementById('card-holder-name');
             const cardButton = document.getElementById('card-button');
+            const clientSecret = cardButton.dataset.secret;
             
             cardButton.addEventListener('click', async (e) => {
-                const { paymentMethod, error } = await stripe.createPaymentMethod(
-                    'card', cardElement, {
-                        billing_details: { name: cardHolderName.value }
+                e.preventDefault();
+                const { paymentMethod, error } = await stripe.confirmCardSetup(
+                    clientSecret, {
+                        payment_method: {
+                            card: card,
+                            billing_details: { name: cardHolderName.value }
+                        }
                     }
                 );
             
                 if (error) {
-                    alert('Error');
-                    // Display "error.message" to the user...
+                    var errorElement = document.getElementById('card-errors');
+                    errorElement.textContent = error.message;
                 } else {
-                    alert('Success');
-                    // The card has been verified successfully...
+                    paymentMethodHandler(paymentMethod.payment_method);
                 }
             });
+
+            function paymentMethodHandler(payment_method) {
+                var form = document.getElementById('subscribe-form');
+                var hiddenInput = document.createElement('input');
+                hiddenInput.setAttribute('type', 'hidden');
+                hiddenInput.setAttribute('name', 'payment_method');
+                hiddenInput.setAttribute('value', payment_method);
+                form.appendChild(hiddenInput);
+                form.submit();
+            }
         </script>
     </body>
 </html>

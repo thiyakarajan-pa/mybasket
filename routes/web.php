@@ -23,7 +23,9 @@ Route::get('/', [ProductController::class, 'index']);
 
 Route::get('/view/{item}', [ProductController::class, 'getItem']);
 
-//Auth::routes();
+Auth::routes();
 
 Route::get('/home', [HomeController::class, 'index'])->name('home');
+
+Route::POST('checkout', [HomeController::class, 'checkout'])->name('checkout');
 
