@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Productcontroller;
+use App\Http\Controllers\HomeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,3 +22,8 @@ use App\Http\Controllers\Productcontroller;
 Route::get('/', [ProductController::class, 'index']);
 
 Route::get('/view/{item}', [ProductController::class, 'getItem']);
+
+//Auth::routes();
+
+Route::get('/home', [HomeController::class, 'index'])->name('home');
+

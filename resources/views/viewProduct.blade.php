@@ -9,6 +9,7 @@
 
         <!-- Fonts -->
         <link href="https://fonts.bunny.net/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+        
         <link rel="stylesheet" href="../assets/vendors/themify-icons/css/themify-icons.css">
         <!-- Bootstrap + Meyawo main styles -->
         <link rel="stylesheet" href="../assets/css/meyawo.css">
@@ -22,6 +23,8 @@
                 font-family: 'Nunito', sans-serif;
             }
             .header { min-height:100px; height:100px; background:#695aa6; }
+
+            input {border:1px solid #000;}
         </style>
     </head>
     <body data-spy="scroll" data-target=".navbar" data-offset="40" id="home">
@@ -31,7 +34,7 @@
                 <a class="logo" href="#">My Basket</a>         
                 <ul class="nav">
                     <li class="item">
-                        <a class="link" href="/">Home</a>
+                        <a class="link" href="../">Home</a>
                     </li>
                 </ul>
                 <a href="javascript:void(0)" id="nav-toggle" class="hamburger hamburger--elastic">
@@ -58,7 +61,23 @@
                     <div class="col-md-6 text-left">
                         <h4>Price : {{ $item->unitPrice }}</h4>
                         <p>{{ $item->description }}</p>
-                        <a href="/buy/{{$item->productCode}}" class="btn btn-lg my-font btn-light rounded">Buy Me</a>
+                        
+                        <div class="panel panel-info">
+                            <div class="panel-heading">Buy Now</div>
+                            <div class="panel-body">
+                                <div class="form-group">
+                                    <input id="card-holder-name" type="text" class="form-control" placeholder="Enter Card Holder Name" />
+                                </div>
+                                <div class="form-group">
+                                    <div id="card-element"></div>
+                                </div>
+                                <!-- Stripe Elements Placeholder -->
+                                
+                                <button id="card-button" class="btn btn-lg my-font btn-light rounded">
+                                    Process Payment
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div><!-- end of row -->
             </div><!-- end of container -->
@@ -88,6 +107,33 @@
 
         <!-- Meyawo js -->
         <script src="../assets/js/meyawo.js"></script>
+        <script src="https://js.stripe.com/v3/"></script>
+ 
+        <script>
+            const stripe = Stripe('pk_test_fRhMNhovq7Rf48uP0DPq4LK7');
+            const elements = stripe.elements();
+            const cardElement = elements.create('card');
+        
+            cardElement.mount('#card-element');
 
+            const cardHolderName = document.getElementById('card-holder-name');
+            const cardButton = document.getElementById('card-button');
+            
+            cardButton.addEventListener('click', async (e) => {
+                const { paymentMethod, error } = await stripe.createPaymentMethod(
+                    'card', cardElement, {
+                        billing_details: { name: cardHolderName.value }
+                    }
+                );
+            
+                if (error) {
+                    alert('Error');
+                    // Display "error.message" to the user...
+                } else {
+                    alert('Success');
+                    // The card has been verified successfully...
+                }
+            });
+        </script>
     </body>
 </html>
