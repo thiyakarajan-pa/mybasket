@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
 {
@@ -28,6 +29,16 @@ class HomeController extends Controller
 
     public function checkout(Request $request)
     {
-        return $request->all();
+        $amount = ($request->amount) * 100;
+
+        $paymentMethod = $request->payment_method;
+
+        $user = Auth::user();
+        $user->createOrGetStripeCustomer();
+
+        $paymentMethod = $user->addPaymentMethod($paymentMethod);
+        $user->charge($amount, $paymentMethod->id);
+
+        return to_route('success');
     }
 }

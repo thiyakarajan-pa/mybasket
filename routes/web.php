@@ -19,7 +19,7 @@ use App\Http\Controllers\HomeController;
 //     return view('index', 'ProductController@index');
 // });
 
-Route::get('/', [ProductController::class, 'index']);
+Route::get('/index', [ProductController::class, 'index']);
 
 Route::get('/view/{item}', [ProductController::class, 'getItem']);
 

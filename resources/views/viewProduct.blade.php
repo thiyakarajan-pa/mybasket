@@ -83,13 +83,12 @@
                             <div class="panel-body">
                                 <form action="{{ route('checkout') }}" method="POST" id="subscribe-form">
                                     <div class="form-group">
-                                        <input id="amount" type="number" value="{{ $item->unitPrice }}" class="form-control" placeholder="Enter the Price" readonly />
+                                        <input id="amount" type="number" value="{{ $item->unitPrice }}" class="form-control" placeholder="Enter the Price" />
                                     </div>
                                     <div class="form-group">
                                         <input id="card-holder-name" type="text" class="form-control" placeholder="Enter Card Holder Name" />
                                     </div>
-                                    @csrf
-                                    <div class="form-group">
+                                    <div class="form-row">
                                         <label for="card-element">Card Details</label>
                                         <div id="card-element" class="form-control">
                                         </div>
@@ -104,9 +103,8 @@
                                         @endforeach
                                     </div>
                                     @endif
-                                    
                                     <div class="form-group text-center">
-                                        <button id="card-button" data-secret="{{ config('services.stripe.secret') }}" class="btn btn-lg my-font btn-light rounded">Proceed Payment</button>
+                                        <button  id="card-button" data-secret="{{ $intent->client_secret }}" class="btn btn-lg btn-success btn-block">SUBMIT</button>
                                     </div>
                                 </form>
                             </div>
@@ -171,16 +169,15 @@
                     displayError.textContent = '';
                 }
             });
-        
-            cardElement.mount('#card-element');
-
             const cardHolderName = document.getElementById('card-holder-name');
             const cardButton = document.getElementById('card-button');
             const clientSecret = cardButton.dataset.secret;
+
+            var payment_method = elements.create('payment');
             
             cardButton.addEventListener('click', async (e) => {
                 e.preventDefault();
-                const { paymentMethod, error } = await stripe.confirmCardSetup(
+                const { setupIndent, error } = await stripe.confirmCardSetup(
                     clientSecret, {
                         payment_method: {
                             card: card,
@@ -193,7 +190,7 @@
                     var errorElement = document.getElementById('card-errors');
                     errorElement.textContent = error.message;
                 } else {
-                    paymentMethodHandler(paymentMethod.payment_method);
+                    paymentMethodHandler(setupIndent.payment_method);
                 }
             });
 
